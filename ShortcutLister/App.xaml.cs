@@ -16,16 +16,28 @@ namespace ShortcutLister
     public partial class App : Application
     {
         private System.Windows.Forms.NotifyIcon NotifyIcon = null;
+        private MainWindow SettingsWindow = null;
+
+        public static String FolderName = "ShortcutLister";
+        public static String FolderPath
+        {
+            get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), FolderName); }
+        }
 
         public App()
         {
-            ShowNotificationIcon();            
+            ShowNotificationIcon();
+
+            // If different language resources are desired later, can add more. I made a temp one for now.
+            //ShortcutLister.Properties.Resources.Culture = new System.Globalization.CultureInfo("sv-SE");
+
+            InitializeSettingsWindow();
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
             base.OnExit(e);
-            RemoveNotificationIcon();
+            RemoveNotificationIcon();            
         }
 
         /// <summary>
@@ -39,9 +51,20 @@ namespace ShortcutLister
             NotifyIcon.Icon = new System.Drawing.Icon(iconStream);
             NotifyIcon.Visible = true;
             NotifyIcon.ContextMenuStrip = CreateContextMenu();
+            NotifyIcon.DoubleClick += NotifyIcon_DoubleClick;
 
             iconStream.Dispose();
 
+            return;
+        }
+
+        private void NotifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+            if (SettingsWindow != null)
+            {
+                SettingsWindow.Show();
+                SettingsWindow.WindowState = WindowState.Normal;
+            }
             return;
         }
 
@@ -63,7 +86,7 @@ namespace ShortcutLister
         {
             System.Windows.Forms.ContextMenuStrip contextMenu = null;
             System.Windows.Forms.ToolStripMenuItem menuItem = null;
-            ShortcutHelper helper = new ShortcutHelper(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ShortcutLister"));
+            ShortcutHelper helper = new ShortcutHelper(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), FolderName));
             List<ShortcutItem> listShortcuts = null;
             System.Drawing.Icon icon = null;
 
@@ -112,6 +135,21 @@ namespace ShortcutLister
 
             Process.Start(process);
 
+            return;
+        }
+
+        private void InitializeSettingsWindow()
+        {
+            SettingsWindow = new ShortcutLister.MainWindow();
+            SettingsWindow.StateChanged += SettingsWindow_StateChanged;
+
+            return;
+        }
+
+        private void SettingsWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (SettingsWindow.WindowState == WindowState.Minimized)
+                SettingsWindow.Visibility = Visibility.Hidden;
             return;
         }
     }

@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Diagnostics;
 
 namespace ShortcutLister
 {
@@ -23,6 +24,13 @@ namespace ShortcutLister
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void buttonOpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            System.IO.Directory.CreateDirectory(App.FolderPath);
+            Process.Start(App.FolderPath);
+            return;
         }
     }
 }
