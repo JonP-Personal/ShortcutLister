@@ -61,6 +61,24 @@ namespace ShortcutLister.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ShortcutLister.
+        /// </summary>
+        public static string AppName {
+            get {
+                return ResourceManager.GetString("AppName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string Close {
+            get {
+                return ResourceManager.GetString("Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to To add new shortcuts, place them in the &quot;Documents\ShortcutLister&quot; folder..
         /// </summary>
         public static string Instructions {
@@ -75,6 +93,15 @@ namespace ShortcutLister.Properties {
         public static string OpenFolder {
             get {
                 return ResourceManager.GetString("OpenFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Settings.
+        /// </summary>
+        public static string Settings {
+            get {
+                return ResourceManager.GetString("Settings", resourceCulture);
             }
         }
     }

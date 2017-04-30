@@ -18,6 +18,9 @@ namespace ShortcutLister
         private System.Windows.Forms.NotifyIcon NotifyIcon = null;
         private MainWindow SettingsWindow = null;
 
+        private readonly String COMMAND_CLOSE = "Close";
+        private readonly String COMMAND_SETTINGS = "Settings";
+
         public static String FolderName = "ShortcutLister";
         public static String FolderPath
         {
@@ -59,6 +62,12 @@ namespace ShortcutLister
         }
 
         private void NotifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+            ShowSettings();
+            return;
+        }
+
+        private void ShowSettings()
         {
             if (SettingsWindow != null)
             {
@@ -107,7 +116,24 @@ namespace ShortcutLister
 
                 contextMenu.Items.Add(menuItem);
             }
-                        
+
+            // Add Separator bar
+            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+
+            // Add Settings option
+            menuItem = new System.Windows.Forms.ToolStripMenuItem();
+            menuItem.Text = ShortcutLister.Properties.Resources.Settings;
+            menuItem.Click += MenuItem_Click;
+            menuItem.Tag = COMMAND_SETTINGS;
+            contextMenu.Items.Add(menuItem);
+
+            // Add Exit option
+            menuItem = new System.Windows.Forms.ToolStripMenuItem();
+            menuItem.Text = ShortcutLister.Properties.Resources.Close;
+            menuItem.Click += MenuItem_Click;
+            menuItem.Tag = COMMAND_CLOSE;
+            contextMenu.Items.Add(menuItem);
+
             return contextMenu;
         }
 
@@ -120,20 +146,42 @@ namespace ShortcutLister
         {
             System.Windows.Forms.ToolStripMenuItem itemSelected = (System.Windows.Forms.ToolStripMenuItem)sender;
             ProcessStartInfo process = new ProcessStartInfo();
-            ShortcutItem item = (ShortcutItem)itemSelected.Tag;
+            ShortcutItem item = null;
+            String sCommand = null;
 
-            process.Arguments = item.Arguments;
-            process.WorkingDirectory = item.WorkingDirectory;
-            process.FileName = item.TargetFileName;
+            if (itemSelected.Tag is String)
+            {
+                sCommand = (String)itemSelected.Tag;
+            }
+            else if (itemSelected.Tag is ShortcutItem)
+            {
+                item = (ShortcutItem)itemSelected.Tag;
+            }
 
-            if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_RESTORE)
-                process.WindowStyle = ProcessWindowStyle.Normal;
-            else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MINIMIZE)
-                process.WindowStyle = ProcessWindowStyle.Minimized;
-            else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MAXIMIZE)
-                process.WindowStyle = ProcessWindowStyle.Maximized;
+            if (item != null)
+            {
+                // This is a shortcut, just launch it
+                process.Arguments = item.Arguments;
+                process.WorkingDirectory = item.WorkingDirectory;
+                process.FileName = item.TargetFileName;
 
-            Process.Start(process);
+                if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_RESTORE)
+                    process.WindowStyle = ProcessWindowStyle.Normal;
+                else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MINIMIZE)
+                    process.WindowStyle = ProcessWindowStyle.Minimized;
+                else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MAXIMIZE)
+                    process.WindowStyle = ProcessWindowStyle.Maximized;
+
+                Process.Start(process);
+            }
+            else if (sCommand != null)
+            {
+                // Command by string. Special cases.
+                if (sCommand.Equals(COMMAND_CLOSE))
+                    Shutdown();
+                else if (sCommand.Equals(COMMAND_SETTINGS))
+                    ShowSettings();
+            }
 
             return;
         }

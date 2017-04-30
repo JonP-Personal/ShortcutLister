@@ -11,5 +11,6 @@
     <Grid>
         <TextBlock x:Name="textBlockInstructions" HorizontalAlignment="Left" Margin="28,25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="{x:Static p:Resources.Instructions}"/>
         <Button x:Name="buttonOpenFolder" Content="{x:Static p:Resources.OpenFolder}" HorizontalAlignment="Left" Margin="28,46,0,0" VerticalAlignment="Top" Width="75" Click="buttonOpenFolder_Click"/>
+        <CheckBox x:Name="checkBoxLaunchOnStartup" Content="Launch on Startup" HorizontalAlignment="Left" Margin="28,117,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Window>

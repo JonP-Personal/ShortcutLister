@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
+using System.Reflection;
+using System.ComponentModel;
 
 namespace ShortcutLister
 {
@@ -24,12 +26,44 @@ namespace ShortcutLister
         public MainWindow()
         {
             InitializeComponent();
+            LoadSettings();
         }
 
         private void buttonOpenFolder_Click(object sender, RoutedEventArgs e)
         {
             System.IO.Directory.CreateDirectory(App.FolderPath);
-            Process.Start(App.FolderPath);
+            Process.Start(App.FolderPath);            
+            return;
+        }
+
+        private void LoadSettings()
+        {
+            checkBoxLaunchOnStartup.IsChecked = Properties.Settings.Default.LaunchOnStartup;
+            return;
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            e.Cancel = true;        // Keep app minimized instead of closing. Can close via right click on icon.
+            Hide();
+            SaveSettings();
+            return;
+        }
+
+        private void SaveSettings()
+        {
+            Properties.Settings.Default.Save();
+
+            SetStartup(Properties.Settings.Default.LaunchOnStartup);
+
+            return;
+        }
+
+        private void SetStartup(bool bLaunchOnStartup)
+        {
+            Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+            key.SetValue(Properties.Resources.AppName, Assembly.GetExecutingAssembly().Location);
             return;
         }
     }
