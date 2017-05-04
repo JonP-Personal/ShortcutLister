@@ -17,6 +17,9 @@ namespace ShortcutLister
     {
         private System.Windows.Forms.NotifyIcon NotifyIcon = null;
         private MainWindow SettingsWindow = null;
+        private DateTime LatestFileCreateDate = DateTime.MinValue;
+        private DateTime LatestFileModifiedDate = DateTime.MinValue;
+        private int FileCount = 0;
 
         private readonly String COMMAND_CLOSE = "Close";
         private readonly String COMMAND_SETTINGS = "Settings";
@@ -52,9 +55,11 @@ namespace ShortcutLister
 
             NotifyIcon = new System.Windows.Forms.NotifyIcon();
             NotifyIcon.Icon = new System.Drawing.Icon(iconStream);
-            NotifyIcon.Visible = true;
-            NotifyIcon.ContextMenuStrip = CreateContextMenu();
-            NotifyIcon.DoubleClick += NotifyIcon_DoubleClick;
+            NotifyIcon.Visible = true;            
+            NotifyIcon.DoubleClick += NotifyIcon_DoubleClick;            
+
+            //NotifyIcon.ContextMenuStrip = CreateContextMenu();
+            CheckContextMenu();     // This sets the ContextMenuStrip, as well as other tracking variables
 
             iconStream.Dispose();
 
@@ -198,6 +203,39 @@ namespace ShortcutLister
         {
             if (SettingsWindow.WindowState == WindowState.Minimized)
                 SettingsWindow.Visibility = Visibility.Hidden;
+            return;
+        }
+
+        /// <summary>
+        /// Checks if the contents of the shortcut folder have changed, and if so, recreates the context menu.
+        /// </summary>
+        public void CheckContextMenu(bool bForceRemake = false)
+        {
+            ShortcutHelper helper = new ShortcutHelper(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), FolderName));
+            DateTime dtLatestCreateDate = DateTime.MinValue;
+            DateTime dtLatestModifiedDate = DateTime.MinValue;
+            int iFileCount = 0;
+
+            helper.GetFolderInfo(out dtLatestCreateDate, out dtLatestModifiedDate, out iFileCount);
+            if (NotifyIcon.ContextMenuStrip == null || bForceRemake  == true || dtLatestCreateDate > LatestFileCreateDate || dtLatestModifiedDate > LatestFileModifiedDate || iFileCount != FileCount)
+            {
+                // Remember for next check, so we don't rebuild the menu unneeded
+                LatestFileCreateDate = dtLatestCreateDate;
+                LatestFileModifiedDate = dtLatestModifiedDate;
+                FileCount = iFileCount;
+
+                // Rebuild menu
+                NotifyIcon.ContextMenuStrip = CreateContextMenu();
+                NotifyIcon.ContextMenuStrip.Opening += ContextMenuStrip_Opening;
+            }
+
+            return;
+        }
+
+        private void ContextMenuStrip_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Verify shortcuts haven't been added/removed since last time we showed the context menu.
+            CheckContextMenu(false);
             return;
         }
     }

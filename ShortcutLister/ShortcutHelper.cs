@@ -74,5 +74,36 @@ namespace ShortcutLister
             return list;
         }
 
+        public void GetFolderInfo(out DateTime LatestCreateDateUTC, out DateTime LatestModifiedDateUTC, out int FileCount)
+        {
+            String[] sFiles = null;
+            DateTime dtLatestCreateDate = DateTime.MinValue;
+            DateTime dtLatestModifiedDate = DateTime.MinValue;
+            int iFileCount = 0;
+            DateTime dtCheck = DateTime.MinValue;
+
+            sFiles = Directory.GetFiles(Folder, "*.lnk");
+            foreach (string sFile in sFiles)
+            {
+                if (sFile == null || sFile == "." || sFile == "..")
+                    continue;
+
+                dtCheck = File.GetCreationTimeUtc(sFile);
+                if (dtCheck > dtLatestCreateDate)
+                    dtLatestCreateDate = dtCheck;
+
+                dtCheck = File.GetLastWriteTimeUtc(sFile);
+                if (dtCheck > dtLatestModifiedDate)
+                    dtLatestModifiedDate = dtCheck;
+
+                iFileCount++;
+            }
+
+            LatestCreateDateUTC = dtLatestCreateDate;
+            LatestModifiedDateUTC = dtLatestModifiedDate;
+            FileCount = iFileCount;
+
+            return;
+        }
     }
 }

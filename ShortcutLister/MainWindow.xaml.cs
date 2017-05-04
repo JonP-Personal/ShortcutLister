@@ -46,8 +46,9 @@ namespace ShortcutLister
         {
             base.OnClosing(e);
             e.Cancel = true;        // Keep app minimized instead of closing. Can close via right click on icon.
-            Hide();
+            Hide();            
             SaveSettings();
+            RemakeContextMenu();
             return;
         }
 
@@ -64,6 +65,24 @@ namespace ShortcutLister
         {
             Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
             key.SetValue(Properties.Resources.AppName, Assembly.GetExecutingAssembly().Location);
+            return;
+        }
+
+        protected override void OnStateChanged(EventArgs e)
+        {
+            base.OnStateChanged(e);
+
+            if (WindowState == WindowState.Minimized)
+            {
+                RemakeContextMenu();
+            }
+
+            return;
+        }
+
+        private void RemakeContextMenu()
+        {
+            ((App)Application.Current).CheckContextMenu(true);
             return;
         }
     }
