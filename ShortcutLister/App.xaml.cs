@@ -56,7 +56,8 @@ namespace ShortcutLister
             NotifyIcon = new System.Windows.Forms.NotifyIcon();
             NotifyIcon.Icon = new System.Drawing.Icon(iconStream);
             NotifyIcon.Visible = true;            
-            NotifyIcon.DoubleClick += NotifyIcon_DoubleClick;            
+            NotifyIcon.DoubleClick += NotifyIcon_DoubleClick;
+            NotifyIcon.Click += NotifyIcon_Click;
 
             //NotifyIcon.ContextMenuStrip = CreateContextMenu();
             CheckContextMenu();     // This sets the ContextMenuStrip, as well as other tracking variables
@@ -66,12 +67,33 @@ namespace ShortcutLister
             return;
         }
 
+        private void NotifyIcon_Click(object sender, EventArgs e)
+        {
+            // Treat left click as showing/hiding the options as well
+            if (NotifyIcon != null && NotifyIcon.ContextMenuStrip != null)
+            {
+                System.Windows.Forms.MouseEventArgs args = (System.Windows.Forms.MouseEventArgs)e;
+
+                if (args.Button == System.Windows.Forms.MouseButtons.Left)
+                {
+                    if (NotifyIcon.ContextMenuStrip.Visible == false)
+                        NotifyIcon.ContextMenuStrip.Show(System.Windows.Forms.Cursor.Position);
+                    else
+                        NotifyIcon.ContextMenuStrip.Visible = false;
+                }
+            }
+            return;
+        }
+
         private void NotifyIcon_DoubleClick(object sender, EventArgs e)
         {
             ShowSettings();
             return;
         }
 
+        /// <summary>
+        /// Shows the settings window
+        /// </summary>
         private void ShowSettings()
         {
             if (SettingsWindow != null)
@@ -109,15 +131,27 @@ namespace ShortcutLister
 
             foreach (ShortcutItem item in listShortcuts)
             {
-                icon = System.Drawing.Icon.ExtractAssociatedIcon(item.TargetFileName);                
+                if (item.TargetFileName != null)
+                    icon = System.Drawing.Icon.ExtractAssociatedIcon(item.TargetFileName);
+                else if (item.Children != null && item.Children.Count > 0)
+                    icon = null;        // Folder icon
+                else
+                    icon = null;
 
                 menuItem = new System.Windows.Forms.ToolStripMenuItem();
                 menuItem.Text = item.DisplayName;                
-                menuItem.Image = icon.ToBitmap();
+                if (icon != null)
+                    menuItem.Image = icon.ToBitmap();
                 menuItem.Click += MenuItem_Click;
                 menuItem.Tag = item;
 
-                icon.Dispose();                
+                if (item.Children != null && item.Children.Count > 0)
+                {
+                    //menuItem.DropDownItems.Add(menuItem);
+                }
+
+                if (icon != null)
+                    icon.Dispose();                
 
                 contextMenu.Items.Add(menuItem);
             }
@@ -166,18 +200,21 @@ namespace ShortcutLister
             if (item != null)
             {
                 // This is a shortcut, just launch it
-                process.Arguments = item.Arguments;
-                process.WorkingDirectory = item.WorkingDirectory;
-                process.FileName = item.TargetFileName;
+                if (item.TargetFileName != null && item.TargetFileName.Length > 0)
+                {
+                    process.Arguments = item.Arguments;
+                    process.WorkingDirectory = item.WorkingDirectory;
+                    process.FileName = item.TargetFileName;
 
-                if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_RESTORE)
-                    process.WindowStyle = ProcessWindowStyle.Normal;
-                else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MINIMIZE)
-                    process.WindowStyle = ProcessWindowStyle.Minimized;
-                else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MAXIMIZE)
-                    process.WindowStyle = ProcessWindowStyle.Maximized;
+                    if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_RESTORE)
+                        process.WindowStyle = ProcessWindowStyle.Normal;
+                    else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MINIMIZE)
+                        process.WindowStyle = ProcessWindowStyle.Minimized;
+                    else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MAXIMIZE)
+                        process.WindowStyle = ProcessWindowStyle.Maximized;
 
-                Process.Start(process);
+                    Process.Start(process);
+                }
             }
             else if (sCommand != null)
             {
@@ -191,6 +228,9 @@ namespace ShortcutLister
             return;
         }
 
+        /// <summary>
+        /// Initializes settings window. Only needs to be called once. Does not show it (call ShowSettingsWindow() to show it).
+        /// </summary>
         private void InitializeSettingsWindow()
         {
             SettingsWindow = new ShortcutLister.MainWindow();

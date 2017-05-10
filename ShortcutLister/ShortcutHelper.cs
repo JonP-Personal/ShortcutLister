@@ -21,6 +21,8 @@ namespace ShortcutLister
         public String Arguments = null;
         public String WorkingDirectory = null;
         public int ShowCommand = 0;
+
+        public List<ShortcutItem> Children = null;
     }
 
     class ShortcutHelper
@@ -34,6 +36,11 @@ namespace ShortcutLister
 
         public List<ShortcutItem> GetShortcutItems()
         {
+            return GetShortcutItems(Folder);
+        }
+
+        public List<ShortcutItem> GetShortcutItems(String sFolder)
+        {
             List<ShortcutItem> list = new List<ShortcutItem>();
             string[] sFiles = null;
             ShortcutItem item = null;
@@ -44,7 +51,8 @@ namespace ShortcutLister
             string sPathOnly = null;
             string sFileOnly = null;           
 
-            sFiles = Directory.GetFiles(Folder, "*.lnk");
+            // Add all shortcuts
+            sFiles = Directory.GetFiles(sFolder, "*.lnk");
             foreach (string sFile in sFiles)
             {
                 item = new ShortcutItem();
@@ -71,10 +79,34 @@ namespace ShortcutLister
                 }
             }
 
+            // Add folders
+            sFiles = Directory.GetDirectories(sFolder);
+            foreach (string sFile in sFiles)
+            {
+                if (sFile == "." || sFile == "..")
+                    continue;
+
+                if (Directory.Exists(sFile) == true)
+                {
+                    item = new ShortcutItem();
+                    item.DisplayName = Path.GetFileName(sFile);
+                    item.Children = GetShortcutItems(sFile);
+
+                    if (item.Children != null && item.Children.Count > 0)
+                        list.Add(item);
+                }
+            }
+
             return list;
         }
 
         public void GetFolderInfo(out DateTime LatestCreateDateUTC, out DateTime LatestModifiedDateUTC, out int FileCount)
+        {
+            GetFolderInfo(Folder, out LatestCreateDateUTC, out LatestModifiedDateUTC, out FileCount);
+            return;
+        }
+
+        public void GetFolderInfo(String sFolder, out DateTime LatestCreateDateUTC, out DateTime LatestModifiedDateUTC, out int FileCount)
         {
             String[] sFiles = null;
             DateTime dtLatestCreateDate = DateTime.MinValue;
@@ -82,7 +114,7 @@ namespace ShortcutLister
             int iFileCount = 0;
             DateTime dtCheck = DateTime.MinValue;
 
-            sFiles = Directory.GetFiles(Folder, "*.lnk");
+            sFiles = Directory.GetFiles(sFolder, "*.lnk");
             foreach (string sFile in sFiles)
             {
                 if (sFile == null || sFile == "." || sFile == "..")
