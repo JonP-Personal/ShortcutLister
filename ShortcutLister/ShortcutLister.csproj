@@ -56,6 +56,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Log.cs" />
     <Compile Include="Properties\Resources.sv-SE.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

@@ -120,41 +120,15 @@ namespace ShortcutLister
         /// <returns>The context menu to use</returns>
         private System.Windows.Forms.ContextMenuStrip CreateContextMenu()
         {
-            System.Windows.Forms.ContextMenuStrip contextMenu = null;
-            System.Windows.Forms.ToolStripMenuItem menuItem = null;
+            System.Windows.Forms.ContextMenuStrip contextMenu = null;            
             ShortcutHelper helper = new ShortcutHelper(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), FolderName));
             List<ShortcutItem> listShortcuts = null;
-            System.Drawing.Icon icon = null;
+            System.Windows.Forms.ToolStripMenuItem menuItem = null;
 
             contextMenu = new System.Windows.Forms.ContextMenuStrip();
             listShortcuts = helper.GetShortcutItems();
 
-            foreach (ShortcutItem item in listShortcuts)
-            {
-                if (item.TargetFileName != null)
-                    icon = System.Drawing.Icon.ExtractAssociatedIcon(item.TargetFileName);
-                else if (item.Children != null && item.Children.Count > 0)
-                    icon = null;        // Folder icon
-                else
-                    icon = null;
-
-                menuItem = new System.Windows.Forms.ToolStripMenuItem();
-                menuItem.Text = item.DisplayName;                
-                if (icon != null)
-                    menuItem.Image = icon.ToBitmap();
-                menuItem.Click += MenuItem_Click;
-                menuItem.Tag = item;
-
-                if (item.Children != null && item.Children.Count > 0)
-                {
-                    //menuItem.DropDownItems.Add(menuItem);
-                }
-
-                if (icon != null)
-                    icon.Dispose();                
-
-                contextMenu.Items.Add(menuItem);
-            }
+            AddItemsToMenu(contextMenu.Items, listShortcuts);
 
             // Add Separator bar
             contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
@@ -174,6 +148,52 @@ namespace ShortcutLister
             contextMenu.Items.Add(menuItem);
 
             return contextMenu;
+        }
+
+        private void AddItemsToMenu(System.Windows.Forms.ToolStripItemCollection menuItems, List<ShortcutItem> listShortcuts)
+        {
+            if (menuItems == null)
+            {
+                Log.Error("AddItemsToMenu() failed, menu is null");
+                return;
+            }
+            if (listShortcuts == null)
+            {
+                Log.Error("AddItemsToMEnu() failed, shortcut list is null");
+                return;
+            }
+
+            System.Drawing.Icon icon = null;
+            System.Windows.Forms.ToolStripMenuItem menuItem = null;
+
+            foreach (ShortcutItem item in listShortcuts)
+            {
+                if (item.TargetFileName != null)
+                    icon = System.Drawing.Icon.ExtractAssociatedIcon(item.TargetFileName);
+                else if (item.Children != null && item.Children.Count > 0)
+                    icon = null;        // Folder icon
+                else
+                    icon = null;
+
+                menuItem = new System.Windows.Forms.ToolStripMenuItem();
+                menuItem.Text = item.DisplayName;                
+                if (icon != null)
+                    menuItem.Image = icon.ToBitmap();
+                menuItem.Click += MenuItem_Click;
+                menuItem.Tag = item;
+
+                if (item.Children != null && item.Children.Count > 0)
+                {
+                    AddItemsToMenu(menuItem.DropDownItems, item.Children);
+                }
+
+                if (icon != null)
+                    icon.Dispose();
+
+                menuItems.Add(menuItem);
+            }
+
+            return;
         }
 
         /// <summary>
@@ -196,6 +216,10 @@ namespace ShortcutLister
             {
                 item = (ShortcutItem)itemSelected.Tag;
             }
+            else
+            {
+                Log.Warning("MenuItem_Click() unsupported type");
+            }
 
             if (item != null)
             {
@@ -215,6 +239,10 @@ namespace ShortcutLister
 
                     Process.Start(process);
                 }
+                else
+                {
+                    Log.Warning("MenuItem_Click() blank shortcut target");
+                }
             }
             else if (sCommand != null)
             {
@@ -223,6 +251,8 @@ namespace ShortcutLister
                     Shutdown();
                 else if (sCommand.Equals(COMMAND_SETTINGS))
                     ShowSettings();
+                else
+                    Log.Warning("MenuItem_Click() unsupported string command: " + sCommand);
             }
 
             return;
@@ -241,7 +271,7 @@ namespace ShortcutLister
 
         private void SettingsWindow_StateChanged(object sender, EventArgs e)
         {
-            if (SettingsWindow.WindowState == WindowState.Minimized)
+            if (SettingsWindow != null && SettingsWindow.WindowState == WindowState.Minimized)
                 SettingsWindow.Visibility = Visibility.Hidden;
             return;
         }
@@ -251,6 +281,12 @@ namespace ShortcutLister
         /// </summary>
         public void CheckContextMenu(bool bForceRemake = false)
         {
+            if (NotifyIcon == null)
+            {
+                Log.Error("CheckContextMenu() invalid notify icon");
+                return;
+            }
+
             ShortcutHelper helper = new ShortcutHelper(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), FolderName));
             DateTime dtLatestCreateDate = DateTime.MinValue;
             DateTime dtLatestModifiedDate = DateTime.MinValue;
