@@ -167,13 +167,34 @@ namespace ShortcutLister
             System.Windows.Forms.ToolStripMenuItem menuItem = null;
 
             foreach (ShortcutItem item in listShortcuts)
-            {
-                if (item.TargetFileName != null)
-                    icon = System.Drawing.Icon.ExtractAssociatedIcon(item.TargetFileName);
-                else if (item.Children != null && item.Children.Count > 0)
+            {                
+                icon = null;
+                if (item.IconFile != null && item.IconFile.Length > 0)
+                {
+                    // Use icon file if it exists
+                    try
+                    {
+                        icon = System.Drawing.Icon.ExtractAssociatedIcon(item.IconFile);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error("AddItemsToMenu() extracting IconFile", e);
+                    }
+                }                
+                if (icon == null && item.TargetFileName != null && item.TargetFileName.Length > 0)
+                {
+                    // If no icon still, grab from target exe
+                    try
+                    {
+                        icon = System.Drawing.Icon.ExtractAssociatedIcon(item.TargetFileName);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error("AddITemsToMenu() extracting icon from TargetFileName", e);
+                    }
+                }
+                if (item.Children != null && item.Children.Count > 0)
                     icon = null;        // Folder icon
-                else
-                    icon = null;
 
                 menuItem = new System.Windows.Forms.ToolStripMenuItem();
                 menuItem.Text = item.DisplayName;                
