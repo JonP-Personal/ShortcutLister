@@ -114,6 +114,9 @@ namespace ShortcutLister
             int iFileCount = 0;
             DateTime dtCheck = DateTime.MinValue;
 
+            if (Directory.Exists(sFolder) == false)
+                Directory.CreateDirectory(sFolder);
+
             sFiles = Directory.GetFiles(sFolder, "*.lnk");
             foreach (string sFile in sFiles)
             {
