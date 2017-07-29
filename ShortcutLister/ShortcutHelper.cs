@@ -75,6 +75,16 @@ namespace ShortcutLister
 
                     shellLink.GetIconLocation(out item.IconFile);
 
+                    // 07-29-17 JP Sometimes the TargetFileName is wrong, which may make it not work, and unable to find an icon if IconFile is also blank.
+                    // I noticed this with paint.net's icon. Seems to point to the "Program Files (x86)" directory in TargetFileName, but is actually installed to "Program Files".
+                    // The WorkingDirectory variable has the correct path though, so can try to derive it from that if not found.
+                    if (File.Exists(item.TargetFileName) == false)
+                    {
+                        String sNewFileName = Path.Combine(item.WorkingDirectory, Path.GetFileName(item.TargetFileName));
+                        if (File.Exists(sNewFileName) == true)
+                            item.TargetFileName = sNewFileName;
+                    }
+
                     list.Add(item);
                 }
             }

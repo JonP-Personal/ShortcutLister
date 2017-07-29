@@ -258,7 +258,14 @@ namespace ShortcutLister
                     else if (item.ShowCommand == ShortcutItem.SHOWCOMMAND_MAXIMIZE)
                         process.WindowStyle = ProcessWindowStyle.Maximized;
 
-                    Process.Start(process);
+                    try
+                    {
+                        Process.Start(process);
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Error("MenuItem_Click() Process.Start()", exception);
+                    }
                 }
                 else
                 {
